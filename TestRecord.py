@@ -1,13 +1,14 @@
-import pyscreencap as psc
+import pyscreencap
 from time import sleep
 
 # Create a new record object
-rec = psc.Recorder()
+rec = pyscreencap.Recorder(fps=60, bitrate=50)
 
+sleep(1)
 # Start recording
 rec.start_recording()
 
-sleep(5)
+sleep(10)
 
 # Stop recording
 rec.stop_recording()
