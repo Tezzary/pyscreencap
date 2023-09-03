@@ -1,8 +1,8 @@
-import pyscreencap
+from pyscreencap.pyscreencap import Recorder
 from time import sleep
 
 # Create a new record object
-rec = pyscreencap.Recorder(fps=60, bitrate=50)
+rec = Recorder(fps=60, bitrate=50)
 
 sleep(1)
 # Start recording

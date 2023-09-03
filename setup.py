@@ -8,7 +8,6 @@ setup(
     author_email='your.email@example.com',
     packages=find_packages(),
     install_requires=[
-        'imageio[ffmpeg]',
         'dxcam',
         'opencv-python',
         'ffmpeg-python',

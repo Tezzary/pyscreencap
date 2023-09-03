@@ -4,35 +4,24 @@ import ffmpeg
 import numpy as np
 from threading import Thread
 from time import perf_counter
+import subprocess
+
+import pyscreencap.settings as settings
 
 def _accurate_sleep(seconds):
     start = perf_counter()
     while perf_counter() - start < seconds:
         pass
 
+
 class Recorder:
     def __init__(self, path="video.mp4", monitor=0, fps=60, bitrate=50):
         self.path = path
         self.fps = fps
         self.camera = dxcam.create(output_idx=monitor, output_color="BGR")
-        #self.encoder = cv2.VideoWriter(self.path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (1920, 1080))
-        #x264
-        self.encoder = (
-            ffmpeg
-                .input('pipe:', format='rawvideo', pix_fmt='bgr24', s='{}x{}'.format(1920, 1080), r=fps)
-                .output(path, pix_fmt='yuv420p', vcodec='libx264', movflags='faststart', preset='ultrafast', tune='zerolatency', cbr=True, b=f"{bitrate}M", g=fps)
-                .overwrite_output()
-                .run_async(pipe_stdin=True)
-        )
-        '''
-        NVENC
-        self.encoder = (
-            ffmpeg
-                .input('pipe:', format='rawvideo', pix_fmt='bgr24', s='{}x{}'.format(1920, 1080), r=fps)
-                .output(path, pix_fmt='yuv420p', vcodec='h264_nvenc', movflags='faststart', preset=12, tune=3, cbr=True, b=f"{bitrate}M", g=fps)
-                .overwrite_output()
-                .run_async(pipe_stdin=True)
-        )'''
+
+        self.encoder = subprocess.Popen(settings.nvenc(fps, bitrate, path), stdin=subprocess.PIPE)
+
         self.thread = None
         self.recording = False
 
@@ -41,10 +30,12 @@ class Recorder:
         start_time = perf_counter()
         frame_count = 0
         self.recording = True
+        frame = None
+        frame_time = perf_counter()
         while self.recording:
             temp_frame = self.camera.grab()
             
-            #check for None as will be the case occasionally if fps is set near monitor refresh rate or higher
+            #check for None as will be the case occasionally if fps is set near monitor refresh rate or higher. e.g. 60hz monitor recording with dxcam sometimes can only grab 50-55 frames per second, or 120 hz monitor recording with dxcam sometimes can only grab 100-110 frames per second.
             if(temp_frame is not None):
                 frame = temp_frame
 
@@ -57,6 +48,8 @@ class Recorder:
                     .tobytes()
                 )
                 _accurate_sleep(start_time + frame_count / self.fps - perf_counter())
+            print(f"Frame Time: {perf_counter() - frame_time}")
+            frame_time = perf_counter()
 
     def start_recording(self):
         self.thread = Thread(target=self._start_recording)
