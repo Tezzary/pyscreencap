@@ -19,16 +19,15 @@ class Recorder:
         self.path = path
         self.fps = fps
         self.camera = dxcam.create(output_idx=monitor, output_color="BGR")
-
-        self.encoder = subprocess.Popen(settings.nvenc(fps, bitrate, path), stdin=subprocess.PIPE)
-
+        self.encoder = subprocess.Popen(settings.x264(fps, bitrate, path), stdin=subprocess.PIPE)
         self.thread = None
         self.recording = False
+        self.frame_count = 0
 
     
     def _start_recording(self):
         start_time = perf_counter()
-        frame_count = 0
+        self.frame_count = 0
         self.recording = True
         frame = None
         frame_time = perf_counter()
@@ -40,14 +39,14 @@ class Recorder:
                 frame = temp_frame
 
             if(frame is not None):
-                frame_count += 1
+                self.frame_count += 1
                 #self.encoder.write(frame)
                 self.encoder.stdin.write(
                     frame
                     .astype(np.uint8)
                     .tobytes()
                 )
-                _accurate_sleep(start_time + frame_count / self.fps - perf_counter())
+                _accurate_sleep(start_time + self.frame_count / self.fps - perf_counter())
             print(f"Frame Time: {perf_counter() - frame_time}")
             frame_time = perf_counter()
 
@@ -66,4 +65,5 @@ class Recorder:
         #self.encoder.release()
         self.encoder.stdin.close()
         self.encoder.wait()
+        return self.frame_count
             
