@@ -19,7 +19,7 @@ class Recorder:
         self.path = path
         self.fps = fps
         self.camera = dxcam.create(output_idx=monitor, output_color="BGR")
-        self.encoder = subprocess.Popen(settings.x264(fps, bitrate, path), stdin=subprocess.PIPE)
+        self.encoder = subprocess.Popen(settings.nvenc(fps, bitrate, path), stdin=subprocess.PIPE)
         self.thread = None
         self.recording = False
         self.frame_count = 0
@@ -66,4 +66,6 @@ class Recorder:
         self.encoder.stdin.close()
         self.encoder.wait()
         return self.frame_count
-            
+    
+    def upscale_fps(self, fps):
+        subprocess.run(settings.increase_fps(fps, self.path))

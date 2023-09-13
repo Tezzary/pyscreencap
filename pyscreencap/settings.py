@@ -36,3 +36,13 @@ def nvenc(fps, bitrate, path):
             '-y',  # Overwrite output file if it exists
             path
         ]
+def increase_fps(fps, path):
+    return [
+        './pyscreencap/binaries/ffmpeg',  # Path to ffmpeg executable
+        '-i', path,
+        '-filter:v',
+        'minterpolate=fps=' + str(fps) + ':mi_mode=mci:mc_mode=aobmc:me_mode=bidir:me=epzs:mb_size=16:search_param=32:vsbmc=1:scd=none',
+        '-r', str(fps),
+        '-y',  # Overwrite output file if it exists
+        (path.split(".")[0] + "_upscaled.mp4")
+    ]
